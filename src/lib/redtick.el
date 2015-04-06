@@ -1,6 +1,6 @@
 ;; pomodoro work & break intervals
-(defvar redtick-work-interval (* 60 25))
-(defvar redtick-break-interval (* 60 5))
+(defvar redtick-work-interval (* 6 25))
+(defvar redtick-break-interval (* 6 5))
 (defun redtick-workbar-interval (i)
   (/ (* i redtick-work-interval) 8))
 (defun redtick-breakbar-interval (i)
@@ -14,16 +14,12 @@
   (truncate (- (float-time) redtick-started-at)))
 
 (defun redtick-popup-message ()
-  (let ((seconds (redtick-seconds-since-started))
-        (minutes (truncate (redtick-seconds-since-started) 60)))
+  (let ( (minutes (truncate (redtick-seconds-since-started) 60)))
     (concat (cond
-             ((= 0 minutes) (format "%s seconds" seconds))
+             ((= 0 minutes) (format "%s seconds" (redtick-seconds-since-started)))
              ((= 1 minutes) (format "%s minute" minutes))
              (t (format "%s minutes" minutes)))
             " elapsed\nclick to restart")))
-
-;; variable for the timer object
-(defvar redtick-timer nil)
 
 (defun redtick-propertize (bar bar-color)
   (propertize bar
@@ -32,12 +28,13 @@
               'pointer 'hand
               'local-map (make-mode-line-mouse-map
                           'mouse-1 (lambda () (interactive)
-                                     (progn (redtick-stop) (redtick-start) )
-                                     ))))()
+                                       (setq redtick-started-at (float-time))
+                                     ))))
 
-;; (setq old-mode-line-format mode-line-format)
-;; (add-to-list 'mode-line-format
-;;              '(:eval (redtick-bar (redtick-seconds-since-started))) t)
+(setq old-mode-line-format mode-line-format)
+(add-to-list 'mode-line-format
+             '(:eval (redtick-bar (redtick-seconds-since-started))) t)
+(delete '(:eval (redtick-bar (redtick-seconds-since-started))) mode-line-format)
 
 ;; (setq redtick-started-at (float-time))
 ;; (force-mode-line-update)
@@ -45,9 +42,6 @@
 ;; (setq mode-line-format old-mode-line-format)
 
 ;; (redtick-bar (redtick-seconds-since-started))
-;; (delete '(:eval (redtick-bar (redtick-seconds-since-started))) mode-line-format)
-
-
 
 ;; draws bar http://www.utexas.edu/learn/html/colors.html
 (defun redtick-bar (seconds)
@@ -68,32 +62,4 @@
    ((< seconds (redtick-breakbar-interval 6)) (redtick-propertize "▃" "#66ff66"))
    ((< seconds (redtick-breakbar-interval 7)) (redtick-propertize "▂" "#99ff66"))
    ((< seconds (redtick-breakbar-interval 8)) (redtick-propertize "▁" "#ccff66"))
-   (t (progn
-        (cancel-timer redtick-timer)
-        (redtick-propertize "∞" "SkyBlue2")))))
-
-;; Callback function 
-(defun redtick-callback ()
-  (setq global-mode-string
-        (redtick-bar (redtick-seconds-since-started)))
-  (force-mode-line-update t))
-
-(defun redtick-start ()
-  (interactive)
-  (setq redtick-started-at (float-time))
-  (when (timerp redtick-timer)
-    (cancel-timer redtick-timer))
-  (setq redtick-timer
-          (run-with-timer 0 1 #'redtick-callback)))
-
-;; stop function
-(defun redtick-stop ()
-  (interactive)
-  (when (timerp redtick-timer)
-    (cancel-timer redtick-timer))
-  (setq redtick-timer nil)
-  (setq global-mode-string nil))
-
-
-
-
+   (t (redtick-propertize "∞" "SkyBlue2"))))
