@@ -16,8 +16,9 @@
 (defun redtick-popup-message ()
   (let ( (minutes (truncate (redtick-seconds-since-started) 60)))
     (concat (cond
-             ((= 0 minutes) (format "%s seconds" (redtick-seconds-since-started)))
-             ((= 1 minutes) (format "%s minute" minutes))
+             ((= 0 minutes) (format "%s seconds"
+                                    (redtick-seconds-since-started)))
+             ((= 1 minutes) "1 minute")
              (t (format "%s minutes" minutes)))
             " elapsed\nclick to restart")))
 
@@ -30,18 +31,6 @@
                           'mouse-1 (lambda () (interactive)
                                        (setq redtick-started-at (float-time))
                                      ))))
-
-(setq old-mode-line-format mode-line-format)
-(add-to-list 'mode-line-format
-             '(:eval (redtick-bar (redtick-seconds-since-started))) t)
-(delete '(:eval (redtick-bar (redtick-seconds-since-started))) mode-line-format)
-
-;; (setq redtick-started-at (float-time))
-;; (force-mode-line-update)
-
-;; (setq mode-line-format old-mode-line-format)
-
-;; (redtick-bar (redtick-seconds-since-started))
 
 ;; draws bar http://www.utexas.edu/learn/html/colors.html
 (defun redtick-bar (seconds)
@@ -63,3 +52,22 @@
    ((< seconds (redtick-breakbar-interval 7)) (redtick-propertize "▂" "#99ff66"))
    ((< seconds (redtick-breakbar-interval 8)) (redtick-propertize "▁" "#ccff66"))
    (t (redtick-propertize "∞" "SkyBlue2"))))
+
+(defun redtick-redraw-mode-line ()
+  (progn
+    (force-mode-line-update)
+    (run-at-time 5 nil 'redtick-redraw-mode-line)))
+
+(setq old-mode-line-format mode-line-format)
+(add-to-list 'mode-line-format
+             '(:eval (redtick-bar (redtick-seconds-since-started))) t)
+(redtick-redraw-mode-line)
+
+;; (delete '(:eval (redtick-bar (redtick-seconds-since-started))) mode-line-format)
+
+;; (setq redtick-started-at (float-time))
+;; (force-mode-line-update)
+
+;; (setq mode-line-format old-mode-line-format)
+
+;; (redtick-bar (redtick-seconds-since-started))
