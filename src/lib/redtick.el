@@ -8,7 +8,6 @@
 
 ;; pomodoro start time
 (defvar redtick-started-at (float-time))
-
 ;; seconds since pomodoro started
 (defun redtick-seconds-since-started ()
   (truncate (- (float-time) redtick-started-at)))
@@ -58,16 +57,33 @@
     (force-mode-line-update)
     (run-at-time 5 nil 'redtick-redraw-mode-line)))
 
-(setq old-mode-line-format mode-line-format)
-(add-to-list 'mode-line-format
-             '(:eval (redtick-bar (redtick-seconds-since-started))) t)
-(redtick-redraw-mode-line)
+(defun redtick-set-selected-window ()
+  "sets the variable `redtick-selected-window` appropriately"
+  (when (not (minibuffer-window-active-p (frame-selected-window)))
+    (setq redtick-selected-window (frame-selected-window))))
 
-;; (delete '(:eval (redtick-bar (redtick-seconds-since-started))) mode-line-format)
+(add-hook 'window-configuration-change-hook 'redtick-set-selected-window)
+(add-hook 'focus-in-hook 'redtick-set-selected-window)
+(add-hook 'focus-out-hook 'redtick-set-selected-window)
 
-;; (setq redtick-started-at (float-time))
-;; (force-mode-line-update)
+(defadvice select-window (after redtick-select-window activate)
+  "makes redtick aware of window changes"
+  (redtick-set-selected-window))
 
-;; (setq mode-line-format old-mode-line-format)
+(defun redtick-selected-window-active ()
+  "Return whether the current window is active."
+  (eq redtick-selected-window (selected-window)))
 
-;; (redtick-bar (redtick-seconds-since-started))
+(defun redtick-bar-in-selected-window ()
+  (if (redtick-selected-window-active)
+      (redtick-bar (redtick-seconds-since-started))))
+
+(defun redtick-start ()
+  (interactive)
+  (progn
+    (add-to-list 'mode-line-misc-info
+                 '(:eval (redtick-bar-in-selected-window)))
+    (redtick-set-selected-window)
+    (setq redtick-started-at (float-time))
+    (force-mode-line-update t))
+  )
