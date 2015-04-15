@@ -1,13 +1,30 @@
 ;; pomodoro work & break intervals
 (defvar redtick-work-interval (* 6 25))
 (defvar redtick-break-interval (* 6 5))
-(defun redtick-workbar-interval (i)
-  (/ (* i redtick-work-interval) 8))
-(defun redtick-breakbar-interval (i)
-  (+ redtick-work-interval (/ (* i redtick-break-interval) 8)))
-
 ;; pomodoro start time
 (defvar redtick-started-at (float-time))
+;; redtick bars for every interval
+(defvar redtick-workbars-interval (/ redtick-work-interval 8.0))
+(defvar redtick-breakbars-interval (/ redtick-break-interval 8.0))
+(defvar redtick-bars
+  '((redtick-workbars-interval "█" "#ffff66")
+   (redtick-workbars-interval "▇" "#ffcc66")
+   (redtick-workbars-interval "▆" "#cc9966")
+   (redtick-workbars-interval "▅" "#ff9966")
+   (redtick-workbars-interval "▄" "#cc6666")
+   (redtick-workbars-interval "▃" "#ff6666")
+   (redtick-workbars-interval "▂" "#ff3366")
+   (redtick-workbars-interval "▁" "#ff0066")
+   (redtick-breakbars-interval "█" "#00cc66")
+   (redtick-breakbars-interval "▇" "#33cc66")
+   (redtick-breakbars-interval "▆" "#66cc66")
+   (redtick-breakbars-interval "▅" "#00ff66")
+   (redtick-breakbars-interval "▄" "#33ff66")
+   (redtick-breakbars-interval "▃" "#66ff66")
+   (redtick-breakbars-interval "▂" "#99ff66")
+   (redtick-breakbars-interval "▁" "#ccff66")
+   ("∞" "SkyBlue2" nil)))
+
 ;; seconds since pomodoro started
 (defun redtick-seconds-since-started ()
   (truncate (- (float-time) redtick-started-at)))
@@ -30,6 +47,18 @@
                           'mouse-1 (lambda () (interactive)
                                        (setq redtick-started-at (float-time))
                                      ))))
+
+(defun redtick-workbar-interval (i)
+  (/ (* i redtick-work-interval) 8))
+(defun redtick-breakbar-interval (i)
+  (+ redtick-work-interval (/ (* i redtick-break-interval) 8)))
+
+;; how to appy a funtion to a list
+;; (setq redtick-current-bars redtick-bars)
+;; (setq current-bar (pop redtick-current-bars))
+;; (setq current-time (pop current-bar))
+;; (message current-bar)
+;; (apply 'redtick-propertize current-bar)
 
 ;; draws bar http://www.utexas.edu/learn/html/colors.html
 (defun redtick-bar (seconds)
