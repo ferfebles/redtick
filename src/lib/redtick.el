@@ -71,8 +71,15 @@
 (put 'redtick-current-bar 'risky-local-variable t)
 
 ;; adding to mode-line
-(add-to-list 'mode-line-misc-info
-             '(:eval (if (redtick-selected-window-p) redtick-current-bar)))
+;;(add-to-list 'mode-line-misc-info
+;;             '(:eval (if (redtick-selected-window-p) redtick-current-bar)))
+
+(add-to-list 'mode-line-front-space
+             '(" " (:eval (if (redtick-selected-window-p) redtick-current-bar))))
+
+;; (setq sml/pre-modes-separator '(" "
+;;                                (:eval (if (redtick-selected-window-p) redtick-current-bar))
+;;                                " "))
 
 ;; updates current bar, and programs next update.
 (defun redtick-update-current-bar (redtick-current-bars)
