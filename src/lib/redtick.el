@@ -1,3 +1,56 @@
+;;; redtick.el --- Smallest emacs pomodoro timer (1 char)
+
+;; Author: F. Febles
+;; URL: http://github.com/ferfebles/redtick
+;; Version: 00.01.01
+;; Package-Requires: ((names "20151201.0") (emacs "24"))
+;; Keywords: pomodoro, timer
+
+;; This is free and unencumbered software released into the public domain.
+
+;; Anyone is free to copy, modify, publish, use, compile, sell, or
+;; distribute this software, either in source code form or as a compiled
+;; binary, for any purpose, commercial or non-commercial, and by any
+;; means.
+
+;; In jurisdictions that recognize copyright laws, the author or authors
+;; of this software dedicate any and all copyright interest in the
+;; software to the public domain. We make this dedication for the benefit
+;; of the public at large and to the detriment of our heirs and
+;; successors. We intend this dedication to be an overt act of
+;; relinquishment in perpetuity of all present and future rights to this
+;; software under copyright law.
+
+;; THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+;; EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+;; MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+;; IN NO EVENT SHALL THE AUTHORS BE LIABLE FOR ANY CLAIM, DAMAGES OR
+;; OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
+;; ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+;; OTHER DEALINGS IN THE SOFTWARE.
+
+;; For more information, please refer to <http://unlicense.org/>
+
+;;; Commentary:
+
+;; This package provides a little pomodoro timer inside the mode-line.
+;;
+;; After importing, it shows a little red tick (✓) in the mode-line. When
+;; you click in it, it starts a pomodoro timer.
+;;
+;; It only shows the timer in the selected window (a moving timer
+;; replicated in each window is a little bit distracting!).
+;;
+;; I thought about this, after seeing the spinner.el package.
+;;
+;; Despite my limited knowledge of elisp and emacs, I tried to make it
+;; as efficient as it can be:
+;;   - It uses an elisp timer to program the next modification of the
+;;     pomodoro timer.
+;;   - Only works when the mode-line is changed.
+
+;;; Code:
+
 ;; pomodoro work & break intervals in seconds
 (defvar redtick-work-interval (* 6 25))
 (defvar redtick-break-interval (* 6 5))
@@ -24,7 +77,7 @@
     (1 "▃" "#66ff66")
     (1 "▂" "#99ff66")
     (1 "▁" "#ccff66")
-    (nil "✓" "SkyBlue2")))
+    (nil "✓" "#cf6a4c")))
 
 ;; pomodoro start time
 (defvar redtick-started-at (float-time))
@@ -65,21 +118,14 @@
 
 ;; initializing current bar
 (defvar redtick-current-bar
-  (redtick-propertize "✓" "SkyBlue2"))
+  (redtick-propertize "✓" "#cf6a4c"))
 
 ;; setting as risky, so it's painted with colour
 (put 'redtick-current-bar 'risky-local-variable t)
 
 ;; adding to mode-line
-;;(add-to-list 'mode-line-misc-info
-;;             '(:eval (if (redtick-selected-window-p) redtick-current-bar)))
-
-(add-to-list 'mode-line-front-space
-             '(" " (:eval (if (redtick-selected-window-p) redtick-current-bar))))
-
-;; (setq sml/pre-modes-separator '(" "
-;;                                (:eval (if (redtick-selected-window-p) redtick-current-bar))
-;;                                " "))
+(add-to-list 'mode-line-misc-info
+             '(:eval (if (redtick-selected-window-p) redtick-current-bar)))
 
 ;; updates current bar, and programs next update.
 (defun redtick-update-current-bar (redtick-current-bars)
@@ -98,3 +144,6 @@
   (progn
     (setq redtick-started-at (float-time))
     (redtick-update-current-bar redtick-bars)))
+
+(provide 'redtick)
+;;; redtick.el ends here
