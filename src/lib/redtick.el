@@ -33,6 +33,7 @@
 (defun redtick-seconds-since-started ()
   (truncate (- (float-time) redtick-started-at)))
 
+;; seconds or minutes since started
 (defun redtick-popup-message ()
   (let ( (minutes (truncate (redtick-seconds-since-started) 60)))
     (concat (cond
@@ -42,34 +43,38 @@
              (t (format "%s minutes" minutes)))
             " elapsed\nclick to restart")))
 
+;; set colours, help echo, and click action
 (defun redtick-propertize (bar bar-color)
   (propertize bar
               'face `(:inherit mode-line :foreground ,bar-color)
               'help-echo '(redtick-popup-message)
               'pointer 'hand
-              'local-map (make-mode-line-mouse-map
-                          'mouse-1 (lambda () (interactive)
-                                     (redtick-start)
-                                     ))))
+              'local-map (make-mode-line-mouse-map 'mouse-1 'redtick-start)))
 
-(defvar redtick-selwin (selected-window))
+;; getting selected window from mode-line
+(defvar redtick-selected-window (selected-window))
 
-(defun redtick-set-selwin (windows)
+(defun redtick-set-selected-window (windows)
   (when (not (minibuffer-window-active-p (frame-selected-window)))
-    (setq redtick-selwin (selected-window))))
+    (setq redtick-selected-window (selected-window))))
 
-(add-function :before pre-redisplay-function #'redtick-set-selwin)
+(add-function :before pre-redisplay-function #'redtick-set-selected-window)
 
+(defun redtick-selected-window-p ()
+  (eq redtick-selected-window (get-buffer-window)))
 
-;; (setq redtick-timer nil)
-
+;; initializing current bar
 (defvar redtick-current-bar
   (redtick-propertize "✓" "SkyBlue2"))
-(put 'redtick-current-bar 'risky-local-variable t)
-(add-to-list 'mode-line-misc-info
-             '(:eval (if (eq redtick-selwin (get-buffer-window))
-                         redtick-current-bar)))
 
+;; setting as risky, so it's painted with colour
+(put 'redtick-current-bar 'risky-local-variable t)
+
+;; adding to mode-line
+(add-to-list 'mode-line-misc-info
+             '(:eval (if (redtick-selected-window-p) redtick-current-bar)))
+
+;; updates current bar, and programs next update.
 (defun redtick-update-current-bar (redtick-current-bars)
   (progn
     (setq redtick-current-bar (apply #'redtick-propertize
@@ -78,47 +83,11 @@
         (run-at-time (caar redtick-current-bars)
                      nil
                      #'redtick-update-current-bar
-                     (cdr redtick-current-bars))
-      )
-    (force-mode-line-update t)
-    (message redtick-current-bar)
-    )
-  )
+                     (cdr redtick-current-bars)))
+    (force-mode-line-update t)))
 
 (defun redtick-start ()
   (interactive)
   (progn
     (setq redtick-started-at (float-time))
-    (redtick-update-current-bar redtick-bars)
-    ;; (add-to-list 'mode-line-misc-info
-    ;;              '(redtick-current-bar redtick-current-bar))
-    ;; (redtick-set-selected-window)
-    (force-mode-line-update t))
-  )
-
-;; (defun redtick-redraw-mode-line ()
-;;   (progn
-;;     (force-mode-line-update)
-;;     (run-at-time 1 nil 'redtick-redraw-mode-line)))
-
-;; (defun redtick-set-selected-window ()
-;;   "sets the variable `redtick-selected-window` appropriately"
-;;   (when (not (minibuffer-window-active-p (frame-selected-window)))
-;;     (setq redtick-selected-window (frame-selected-window))))
-
-;; (add-hook 'window-configuration-change-hook 'redtick-set-selected-window)
-;; (add-hook 'focus-in-hook 'redtick-set-selected-window)
-;; (add-hook 'focus-out-hook 'redtick-set-selected-window)
-
-;; (defadvice select-window (after redtick-select-window activate)
-;;   "makes redtick aware of window changes"
-;;   (redtick-set-selected-window))
-
-;; (defun redtick-current-window-active-p ()
-;;   "Return whether the current window is active."
-;;   (eq redtick-selected-window (selected-window)))
-
-;; (defun redtick-bar-in-selected-window ()
-;;   (if (redtick-current-window-active-p)
-;;       redtick-current-bar))
-
+    (redtick-update-current-bar redtick-bars)))
