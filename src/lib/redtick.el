@@ -51,12 +51,21 @@
 
 ;;; Code:
 
+(defgroup redtick nil
+  "Little pomodoro timer inside the mode-line."
+  :group 'tools
+  :prefix "redtick-")
+
 ;; set to nil to disable redtick
 (defvar redtick-enabled t)
 
 ;; pomodoro work & rest intervals in seconds
-(defvar redtick-work-interval (* 2 25))
-(defvar redtick-rest-interval (* 2 5))
+(defcustom redtick-work-interval (* 2 25)
+  "Interval of time you will be working, in seconds"
+  :type 'number)
+(defcustom redtick-rest-interval (* 2 5)
+  "Interval of time you will be resting, in seconds."
+  :type 'number)
 
 ;; redtick bars for every interval
 (defvar redtick-workbar-interval (/ redtick-work-interval 8.0))
@@ -130,27 +139,32 @@
 ;; adding to mode-line
 (add-to-list 'mode-line-misc-info
              '(:eval (if (and redtick-enabled (redtick-selected-window-p))
-                         redtick-current-bar)))
+                         redtick-current-bar))
+             t)
 
 ;; TODO, assign timer to a var, so can be deleted when restarted.
 (defun redtick-update-current-bar (redtick-current-bars)
   "Update current bar, and program next update using REDTICK-CURRENT-BARS."
-  (progn
-    (setq redtick-current-bar (apply #'redtick-propertize
-                                     (cdar redtick-current-bars)))
-    (if (caar redtick-current-bars)
-        (run-at-time (caar redtick-current-bars)
-                     nil
-                     #'redtick-update-current-bar
-                     (cdr redtick-current-bars)))
-    (force-mode-line-update t)))
+  (setq redtick-current-bar (apply #'redtick-propertize
+                                   (cdar redtick-current-bars)))
+  (if (caar redtick-current-bars)
+      (run-at-time (caar redtick-current-bars)
+                   nil
+                   #'redtick-update-current-bar
+                   (cdr redtick-current-bars)))
+  (force-mode-line-update t))
 
 (defun redtick-start ()
   "Start the pomodoro."
   (interactive)
-  (progn
-    (setq redtick-started-at (float-time))
-    (redtick-update-current-bar redtick-bars)))
+  (setq redtick-enabled t)
+  (setq redtick-started-at (float-time))
+  (redtick-update-current-bar redtick-bars))
+
+(defun redtick-toggle ()
+  (interactive)
+  (setq redtick-enabled (not redtick-enabled))
+  (force-mode-line-update))
 
 (provide 'redtick)
 ;;; redtick.el ends here
