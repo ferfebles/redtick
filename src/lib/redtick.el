@@ -56,18 +56,24 @@
   :group 'tools
   :prefix "redtick-")
 
-;; set to nil to disable redtick
-(defvar redtick-enabled t)
+(defcustom redtick-enabled t
+  "Set to nil to disable redtick (used by redtick-toggle).")
 
 ;; pomodoro work & rest intervals in seconds
 (defcustom redtick-work-interval (* 2 25)
-  "Interval of time you will be working, in seconds"
+  "Interval of time you will be working, in seconds."
   :type 'number)
 (defcustom redtick-rest-interval (* 2 5)
   "Interval of time you will be resting, in seconds."
   :type 'number)
 
-;; redtick bars for every interval
+;; stores redtick timer, to be cancelled if restarted
+(defvar redtick-timer nil)
+
+;; pomodoro start time
+(defvar redtick-started-at (float-time))
+
+;; redtick intervals for every bar
 (defvar redtick-workbar-interval (/ redtick-work-interval 8.0))
 (defvar redtick-restbar-interval (/ redtick-rest-interval 8.0))
 
@@ -91,9 +97,6 @@
     (,redtick-restbar-interval "▁" "#ccff66")
     (nil "✓" "#cf6a4c")))
 
-;; pomodoro start time
-(defvar redtick-started-at (float-time))
-
 (defun redtick-seconds-since-started ()
   "Seconds since pomodoro started."
   (truncate (- (float-time) redtick-started-at)))
@@ -116,15 +119,16 @@
               'pointer 'hand
               'local-map (make-mode-line-mouse-map 'mouse-1 'redtick-start)))
 
-;; getting selected window from mode-line
+;; storing selected window to use from mode-line
 (defvar redtick-selected-window (selected-window))
 
-(defun redtick-set-selected-window (windows)
+;; function that updates selected window variable
+(defun redtick-update-selected-window (windows)
   "WINDOWS parameter avoids error when called before 'pre-redisplay-function'."
   (when (not (minibuffer-window-active-p (frame-selected-window)))
     (setq redtick-selected-window (selected-window))))
 
-(add-function :before pre-redisplay-function #'redtick-set-selected-window)
+(add-function :before pre-redisplay-function #'redtick-update-selected-window)
 
 (defun redtick-selected-window-p ()
   "Check if current window is the selected one."
@@ -142,21 +146,21 @@
                          redtick-current-bar))
              t)
 
-;; TODO, assign timer to a var, so can be deleted when restarted.
 (defun redtick-update-current-bar (redtick-current-bars)
   "Update current bar, and program next update using REDTICK-CURRENT-BARS."
   (setq redtick-current-bar (apply #'redtick-propertize
                                    (cdar redtick-current-bars)))
-  (if (caar redtick-current-bars)
-      (run-at-time (caar redtick-current-bars)
-                   nil
-                   #'redtick-update-current-bar
-                   (cdr redtick-current-bars)))
+  (setq redtick-timer (if (caar redtick-current-bars)
+                          (run-at-time (caar redtick-current-bars)
+                                       nil
+                                       #'redtick-update-current-bar
+                                       (cdr redtick-current-bars))))
   (force-mode-line-update t))
 
 (defun redtick-start ()
   "Start the pomodoro."
   (interactive)
+  (if redtick-timer (cancel-timer redtick-timer))
   (setq redtick-enabled t)
   (setq redtick-started-at (float-time))
   (redtick-update-current-bar redtick-bars))
