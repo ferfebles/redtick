@@ -1,4 +1,4 @@
-;;; redtick.el --- Smallest emacs pomodoro timer (1 char)
+;;; redtick.el --- Smallest pomodoro timer (1 char)
 
 ;; Author: F. Febles
 ;; URL: http://github.com/ferfebles/redtick
@@ -33,7 +33,7 @@
 
 ;;; Commentary:
 
-;; This package provides a little pomodoro timer inside the mode-line.
+;; This package provides a little pomodoro timer in the mode-line.
 ;;
 ;; After importing, it shows a little red tick (✓) in the mode-line.
 ;; When you click on it, it starts a pomodoro timer.
@@ -43,8 +43,7 @@
 ;;
 ;; I thought about this, after seeing the spinner.el package.
 ;;
-;; Despite my limited knowledge of elisp and Emacs, I tried to make it
-;; as efficient as it can be:
+;; I tried to make it efficient:
 ;;   - It uses an elisp timer to program the next modification of the
 ;;     mode line: no polling, no sleeps...
 ;;   - Only works when the mode-line is changed.
@@ -52,18 +51,15 @@
 ;;; Code:
 
 (defgroup redtick nil
-  "Little pomodoro timer inside the mode-line."
+  "Little pomodoro timer in the mode-line."
   :group 'tools
   :prefix "redtick-")
 
-(defcustom redtick-enabled t
-  "Set to nil to disable redtick (used by redtick-toggle).")
-
 ;; pomodoro work & rest intervals in seconds
-(defcustom redtick-work-interval (* 2 25)
+(defcustom redtick-work-interval (* 60 25)
   "Interval of time you will be working, in seconds."
   :type 'number)
-(defcustom redtick-rest-interval (* 2 5)
+(defcustom redtick-rest-interval (* 60 5)
   "Interval of time you will be resting, in seconds."
   :type 'number)
 
@@ -109,7 +105,7 @@
                                     (redtick-seconds-since-started)))
              ((= 1 minutes) "1 minute")
              (t (format "%s minutes" minutes)))
-            " elapsed\nclick to restart")))
+            " elapsed\nclick to (re)start")))
 
 (defun redtick-propertize (bar bar-color)
   "Propertize BAR with BAR-COLOR, help echo, and click action."
@@ -118,6 +114,11 @@
               'help-echo '(redtick-popup-message)
               'pointer 'hand
               'local-map (make-mode-line-mouse-map 'mouse-1 'redtick-start)))
+
+;; initializing current bar
+(defvar redtick-current-bar (redtick-propertize "✓" "#cf6a4c"))
+;; setting as risky, so it's painted with colour
+(put 'redtick-current-bar 'risky-local-variable t)
 
 ;; storing selected window to use from mode-line
 (defvar redtick-selected-window (selected-window))
@@ -134,41 +135,34 @@
   "Check if current window is the selected one."
   (eq redtick-selected-window (get-buffer-window)))
 
-;; initializing current bar
-(defvar redtick-current-bar (redtick-propertize "✓" "#cf6a4c"))
-
-;; setting as risky, so it's painted with colour
-(put 'redtick-current-bar 'risky-local-variable t)
-
 ;; adding to mode-line
 (add-to-list 'mode-line-misc-info
-             '(:eval (if (and redtick-enabled (redtick-selected-window-p))
+             '(:eval (if (and redtick-mode (redtick-selected-window-p))
                          redtick-current-bar))
              t)
 
 (defun redtick-update-current-bar (redtick-current-bars)
   "Update current bar, and program next update using REDTICK-CURRENT-BARS."
   (setq redtick-current-bar (apply #'redtick-propertize
-                                   (cdar redtick-current-bars)))
-  (setq redtick-timer (if (caar redtick-current-bars)
+                                   (cdar redtick-current-bars))
+        redtick-timer (if (caar redtick-current-bars)
                           (run-at-time (caar redtick-current-bars)
                                        nil
                                        #'redtick-update-current-bar
                                        (cdr redtick-current-bars))))
   (force-mode-line-update t))
 
+;;;###autoload
+(define-minor-mode redtick-mode
+  "Little pomodoro timer in the mode-line."
+  :global t)
+
 (defun redtick-start ()
   "Start the pomodoro."
   (interactive)
   (if redtick-timer (cancel-timer redtick-timer))
-  (setq redtick-enabled t)
   (setq redtick-started-at (float-time))
   (redtick-update-current-bar redtick-bars))
-
-(defun redtick-toggle ()
-  (interactive)
-  (setq redtick-enabled (not redtick-enabled))
-  (force-mode-line-update))
 
 (provide 'redtick)
 ;;; redtick.el ends here
