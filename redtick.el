@@ -3,7 +3,7 @@
 ;; Author: F. Febles
 ;; URL: http://github.com/ferfebles/redtick
 ;; Version: 00.01.01
-;; Package-Requires: ((names "20151201.0") (emacs "24"))
+;; Package-Requires: ((emacs "24"))
 ;; Keywords: pomodoro, timer
 
 ;; This is free and unencumbered software released into the public domain.
