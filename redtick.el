@@ -93,30 +93,30 @@
     (,redtick-restbar-interval "▁" "#ccff66")
     (nil "✓" "#cf6a4c")))
 
-(defun redtick-seconds-since-started ()
+(defun redtick--seconds-since-started ()
   "Seconds since pomodoro started."
   (truncate (- (float-time) redtick-started-at)))
 
-(defun redtick-popup-message ()
+(defun redtick--popup-message ()
   "String with pomodoro popup message: time since start and instructions."
-  (let ( (minutes (truncate (redtick-seconds-since-started) 60)))
+  (let ( (minutes (truncate (redtick--seconds-since-started) 2)))
     (concat (cond
              ((= 0 minutes) (format "%s seconds"
-                                    (redtick-seconds-since-started)))
+                                    (redtick--seconds-since-started)))
              ((= 1 minutes) "1 minute")
              (t (format "%s minutes" minutes)))
             " elapsed\nclick to (re)start")))
 
-(defun redtick-propertize (bar bar-color)
+(defun redtick--propertize (bar bar-color)
   "Propertize BAR with BAR-COLOR, help echo, and click action."
   (propertize bar
               'face `(:inherit mode-line :foreground ,bar-color)
-              'help-echo '(redtick-popup-message)
+              'help-echo '(redtick--popup-message)
               'pointer 'hand
-              'local-map (make-mode-line-mouse-map 'mouse-1 'redtick-start)))
+              'local-map (make-mode-line-mouse-map 'mouse-1 'redtick)))
 
 ;; initializing current bar
-(defvar redtick-current-bar (redtick-propertize "✓" "#cf6a4c"))
+(defvar redtick-current-bar (redtick--propertize "✓" "#cf6a4c"))
 ;; setting as risky, so it's painted with colour
 (put 'redtick-current-bar 'risky-local-variable t)
 
@@ -124,31 +124,31 @@
 (defvar redtick-selected-window (selected-window))
 
 ;; function that updates selected window variable
-(defun redtick-update-selected-window (windows)
+(defun redtick--update-selected-window (windows)
   "WINDOWS parameter avoids error when called before 'pre-redisplay-function'."
   (when (not (minibuffer-window-active-p (frame-selected-window)))
     (setq redtick-selected-window (selected-window))))
 
-(add-function :before pre-redisplay-function #'redtick-update-selected-window)
+(add-function :before pre-redisplay-function #'redtick--update-selected-window)
 
-(defun redtick-selected-window-p ()
+(defun redtick--selected-window-p ()
   "Check if current window is the selected one."
   (eq redtick-selected-window (get-buffer-window)))
 
 ;; adding to mode-line
 (add-to-list 'mode-line-misc-info
-             '(:eval (if (and redtick-mode (redtick-selected-window-p))
+             '(:eval (if (and redtick-mode (redtick--selected-window-p))
                          redtick-current-bar))
              t)
 
-(defun redtick-update-current-bar (redtick-current-bars)
+(defun redtick--update-current-bar (redtick-current-bars)
   "Update current bar, and program next update using REDTICK-CURRENT-BARS."
-  (setq redtick-current-bar (apply #'redtick-propertize
+  (setq redtick-current-bar (apply #'redtick--propertize
                                    (cdar redtick-current-bars))
         redtick-timer (if (caar redtick-current-bars)
                           (run-at-time (caar redtick-current-bars)
                                        nil
-                                       #'redtick-update-current-bar
+                                       #'redtick--update-current-bar
                                        (cdr redtick-current-bars))))
   (force-mode-line-update t))
 
@@ -157,12 +157,14 @@
   "Little pomodoro timer in the mode-line."
   :global t)
 
-(defun redtick-start ()
-  "Start the pomodoro."
+;;;###autoload
+(defun redtick ()
+  "Enable minor-mode, and start the pomodoro."
   (interactive)
+  (redtick-mode t)
   (if redtick-timer (cancel-timer redtick-timer))
   (setq redtick-started-at (float-time))
-  (redtick-update-current-bar redtick-bars))
+  (redtick--update-current-bar redtick-bars))
 
 (provide 'redtick)
 ;;; redtick.el ends here
