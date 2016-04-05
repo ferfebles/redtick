@@ -63,11 +63,17 @@
   "Interval of time you will be resting, in seconds."
   :type 'number)
 
+;; stores the information for completed pomodoros
+(defvar redtick-completed-pomodoros ())
+
 ;; stores redtick timer, to be cancelled if restarted
 (defvar redtick--timer nil)
 
 ;; pomodoro start time
-(defvar redtick--started-at (float-time))
+(defvar redtick--pomodoro-started-at (current-time))
+
+;; current pomodoro description
+(defvar redtick--pomodoro-description "Start your first pomodoro now!!!")
 
 ;; redtick intervals for every bar
 (defvar redtick--workbar-interval (/ redtick-work-interval 8.0))
@@ -93,25 +99,32 @@
     (,redtick--restbar-interval "▁" "#ccff66")
     (nil "✓" "#cf6a4c")))
 
-(defun redtick--seconds-since-started ()
-  "Seconds since pomodoro started."
-  (truncate (- (float-time) redtick--started-at)))
+(defun redtick--seconds-since (time)
+  "Seconds since TIME."
+  (truncate (- (float-time (current-time)) (float-time time))))
 
-(defun redtick--popup-message ()
-  "String with pomodoro popup message: time since start and instructions."
-  (let ( (minutes (truncate (redtick--seconds-since-started) 60)))
-    (concat (cond
-             ((= 0 minutes) (format "%s seconds"
-                                    (redtick--seconds-since-started)))
+(defun redtick--format-completed-pomodoro (start-time description)
+  "Formats pomodoro START-TIME and DESCRIPTION."
+  (format "%s, %-s" (format-time-string "%T" start-time) description))
+
+(defun redtick--popup-message (time)
+  "String with pomodoro popup message: TIME since start and instructions."
+  (let* ((seconds (redtick--seconds-since time))
+         (minutes (truncate seconds 60)))
+    (concat (redtick--format-completed-pomodoro time
+                                                redtick--pomodoro-description)
+            "\n"
+            (cond
+             ((= 0 minutes) (format "%s seconds" seconds))
              ((= 1 minutes) "1 minute")
              (t (format "%s minutes" minutes)))
-            " elapsed\nclick to (re)start")))
+            " elapsed, click to (re)start")))
 
 (defun redtick--propertize (bar bar-color)
   "Propertize BAR with BAR-COLOR, help echo, and click action."
   (propertize bar
               'face `(:inherit mode-line :foreground ,bar-color)
-              'help-echo '(redtick--popup-message)
+              'help-echo '(redtick--popup-message redtick--pomodoro-started-at)
               'pointer 'hand
               'local-map (make-mode-line-mouse-map 'mouse-1 'redtick)))
 
@@ -157,13 +170,26 @@
   "Little pomodoro timer in the mode-line."
   :global t)
 
+(defun redtick--default-desc ()
+  "Default pomodoro description: Working with 'current-buffer'."
+  (format "Working with '%s'" (current-buffer)))
+
 ;;;###autoload
 (defun redtick ()
   "Enable minor-mode, and start the pomodoro."
   (interactive)
+  (redtick-with-description (redtick--default-desc)))
+
+;;;###autoload
+(defun redtick-with-description (description)
+  "Ask for DESCRIPTION, enable minor-mode, and start the pomodoro."
+  (interactive (list (read-string (format "Description (%s): "
+                                          (redtick--default-desc))
+                                  nil nil (redtick--default-desc))))
   (redtick-mode t)
   (if redtick--timer (cancel-timer redtick--timer))
-  (setq redtick--started-at (float-time))
+  (setq redtick--pomodoro-started-at (current-time)
+        redtick--pomodoro-description description)
   (redtick--update-current-bar redtick--bars))
 
 (provide 'redtick)
