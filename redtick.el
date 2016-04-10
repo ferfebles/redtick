@@ -62,6 +62,10 @@
 (defcustom redtick-rest-interval (* 60 5)
   "Interval of time you will be resting, in seconds."
   :type 'number)
+;; pomodoro history file
+(defcustom redtick-history-file "~/redtick-history.txt"
+  "File to store all the completed pomodoros."
+  :type 'string)
 
 ;; stores the information for completed pomodoros
 (defvar redtick-completed-pomodoros ())
@@ -105,7 +109,7 @@
 
 (defun redtick--format-completed-pomodoro (start-time description)
   "Formats pomodoro START-TIME and DESCRIPTION."
-  (format "%s, %-s" (format-time-string "%T" start-time) description))
+  (format "%s, %-s" (format-time-string "%F %T" start-time) description))
 
 (defun redtick--popup-message (time)
   "String with pomodoro popup message: TIME since start and instructions."
@@ -154,15 +158,35 @@
                          redtick--current-bar))
              t)
 
+(defun redtick--save (file data)
+  "Use FILE to save DATA (wellons at nullprogram.com)."
+  (with-temp-file file
+    (let ((standard-output (current-buffer))
+          (print-circle t))  ; Allow circular data
+      (prin1 data))))
+
+(defun redtick--load (file)
+  "Use FILE to load DATA ((wellons at nullprogram.com)."
+  (ignore-errors (with-temp-buffer
+                   (insert-file-contents file)
+                   (read (current-buffer)))))
+
 (defun redtick--update-current-bar (redtick--current-bars)
   "Update current bar, and program next update using REDTICK--CURRENT-BARS."
   (setq redtick--current-bar (apply #'redtick--propertize
-                                   (cdar redtick--current-bars))
-        redtick--timer (if (caar redtick--current-bars)
-                          (run-at-time (caar redtick--current-bars)
-                                       nil
-                                       #'redtick--update-current-bar
-                                       (cdr redtick--current-bars))))
+                                    (cdar redtick--current-bars)))
+  (if (caar redtick--current-bars)
+      (setq redtick--timer
+            (run-at-time (caar redtick--current-bars)
+                         nil
+                         #'redtick--update-current-bar
+                         (cdr redtick--current-bars)))
+    (let ((history (redtick--load redtick-history-file)))
+      (add-to-list 'history
+                   (redtick--format-completed-pomodoro redtick--pomodoro-started-at
+                                                       redtick--pomodoro-description)
+                   t)
+      (redtick--save redtick-history-file history)))
   (force-mode-line-update t))
 
 ;;;###autoload
