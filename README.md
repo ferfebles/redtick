@@ -27,8 +27,7 @@ I tried to make it efficient:
 # Thanks to #
 
 * Malabarba, for the spinner and smart-mode-line packages.
-
 * abo-abo, for asking how to check if the current window is selected from
 inside the mode-line, and Drew for answering it.
-
 * purcell, for reviewing the code. 
+* wellons at nullprogram.com, for the code used to save and restore lisp data.
