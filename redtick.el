@@ -67,6 +67,8 @@
   "File to store all the completed pomodoros."
   :type 'string)
 
+(require 'which-func)
+
 ;; stores the information for completed pomodoros
 (defvar redtick-completed-pomodoros ())
 
@@ -195,8 +197,10 @@
   :global t)
 
 (defun redtick--default-desc ()
-  "Default pomodoro description: Working with 'current-buffer'."
-  (format "Working with '%s'" (current-buffer)))
+  "Default pomodoro description: Working with 'current-buffer'..."
+  (concat (format "Working with '%s'" (current-buffer))
+          (cond ((which-function)
+                 (format ":'%s'" (which-function))))))
 
 ;;;###autoload
 (defun redtick ()
