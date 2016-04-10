@@ -66,6 +66,9 @@
 (defcustom redtick-history-file "~/redtick-history.txt"
   "File to store all the completed pomodoros."
   :type 'string)
+(defcustom redtick-popup-header '(format "Working with '%s'" (current-buffer))
+  "Header used in popup."
+  :type 'sexp)
 
 (require 'which-func)
 
@@ -109,17 +112,11 @@
   "Seconds since TIME."
   (truncate (- (float-time (current-time)) (float-time time))))
 
-(defun redtick--format-completed-pomodoro (start-time description)
-  "Formats pomodoro START-TIME and DESCRIPTION."
-  (format "%s, %-s" (format-time-string "%F %T" start-time) description))
-
-(defun redtick--popup-message (time)
-  "String with pomodoro popup message: TIME since start and instructions."
+(defun redtick--popup-message (time desc)
+  "TIME since start, DESC(ription) and instructions."
   (let* ((seconds (redtick--seconds-since time))
          (minutes (truncate seconds 60)))
-    (concat (redtick--format-completed-pomodoro time
-                                                redtick--pomodoro-description)
-            "\n"
+    (concat (format "%s, %s\n" (format-time-string "%T" time) desc)
             (cond
              ((= 0 minutes) (format "%s seconds" seconds))
              ((= 1 minutes) "1 minute")
@@ -130,12 +127,14 @@
   "Propertize BAR with BAR-COLOR, help echo, and click action."
   (propertize bar
               'face `(:inherit mode-line :foreground ,bar-color)
-              'help-echo '(redtick--popup-message redtick--pomodoro-started-at)
+              'help-echo '(redtick--popup-message redtick--pomodoro-started-at
+                                                  redtick--pomodoro-description)
               'pointer 'hand
               'local-map (make-mode-line-mouse-map 'mouse-1 'redtick)))
 
 ;; initializing current bar
-(defvar redtick--current-bar (redtick--propertize "✓" "#cf6a4c"))
+(defvar redtick--current-bar (apply #'redtick--propertize
+                                    (cdar (last redtick--bars))))
 ;; setting as risky, so it's painted with colour
 (put 'redtick--current-bar 'risky-local-variable t)
 
@@ -161,17 +160,27 @@
              t)
 
 (defun redtick--save (file data)
-  "Use FILE to save DATA (wellons at nullprogram.com)."
+  "Use FILE to save DATA."
   (with-temp-file file
     (let ((standard-output (current-buffer))
           (print-circle t))  ; Allow circular data
       (prin1 data))))
 
 (defun redtick--load (file)
-  "Use FILE to load DATA ((wellons at nullprogram.com)."
+  "Use FILE to load DATA."
   (ignore-errors (with-temp-buffer
                    (insert-file-contents file)
                    (read (current-buffer)))))
+
+(defun redtick--save-history ()
+  "Adding current-pomodoro info to history file."
+  (redtick--save redtick-history-file
+                 (add-to-list (redtick--load redtick-history-file)
+                              (list redtick--pomodoro-started-at
+                                    redtick-work-interval
+                                    redtick-rest-interval
+                                    redtick--pomodoro-description)
+                              t)))
 
 (defun redtick--update-current-bar (redtick--current-bars)
   "Update current bar, and program next update using REDTICK--CURRENT-BARS."
@@ -183,12 +192,7 @@
                          nil
                          #'redtick--update-current-bar
                          (cdr redtick--current-bars)))
-    (let ((history (redtick--load redtick-history-file)))
-      (add-to-list 'history
-                   (redtick--format-completed-pomodoro redtick--pomodoro-started-at
-                                                       redtick--pomodoro-description)
-                   t)
-      (redtick--save redtick-history-file history)))
+    (redtick--save-history))
   (force-mode-line-update t))
 
 ;;;###autoload
@@ -198,7 +202,7 @@
 
 (defun redtick--default-desc ()
   "Default pomodoro description: Working with 'current-buffer'..."
-  (concat (format "Working with '%s'" (current-buffer))
+  (concat (eval redtick-popup-header)
           (cond ((which-function)
                  (format ":'%s'" (which-function))))))
 
