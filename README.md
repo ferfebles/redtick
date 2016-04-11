@@ -21,7 +21,7 @@ replicated in each window is a little bit distracting!).
 
 ## Why
 
-I thought about this, after seeing the spinner.el package.
+I thought about this, after seeing the [spinner.el package](https://github.com/Malabarba/spinner.el).
 
 ## Elisp
 
