@@ -1,13 +1,13 @@
 RedTick
 =======
 
-# What #
+## What
 
 This package provides a little pomodoro timer in the mode-line.
 
 ![Redtick](https://raw.githubusercontent.com/ferfebles/redtick/master/redtick.gif)
 
-# How #
+## How
 
 * Install from melpa (http://melpa.org/#/getting-started)
 
@@ -19,18 +19,18 @@ you click on it, it starts a pomodoro timer. The pomodoro description is set usi
 It only shows the timer in the selected window (a moving timer
 replicated in each window is a little bit distracting!).
 
-# Why #
+## Why
 
 I thought about this, after seeing the spinner.el package.
 
-# Elisp #
+## Elisp
 
 I tried to make it efficient:
   - It uses an elisp timer to program the next modification of the
     pomodoro timer.
   - Only works when the mode-line is changed.
 
-# Thanks to #
+## Thanks to
 
 * Malabarba, for the spinner and smart-mode-line packages.
 * abo-abo, for asking how to check if the current window is selected from
