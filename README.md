@@ -3,12 +3,18 @@ RedTick
 
 # What #
 
-This package provides a little pomodoro timer inside the mode-line.
+This package provides a little pomodoro timer in the mode-line.
+
+![Redtick](https://raw.githubusercontent.com/ferfebles/redtick/master/redtick.gif)
 
 # How #
 
-After requiring, it shows a little red tick (✓) in the mode-line. When
-you click in it, it starts a pomodoro timer.
+* Install from melpa (http://melpa.org/#/getting-started)
+
+* Use `(require 'redtick)`. After requiring, it shows a little red tick (✓) in the mode-line. When
+you click on it, it starts a pomodoro timer. The pomodoro description is set using current-buffer and which-function.
+
+* You can launch a pomodoro by M-x redtick, or M-x redtick-with-description (manual description).
 
 It only shows the timer in the selected window (a moving timer
 replicated in each window is a little bit distracting!).
@@ -29,5 +35,5 @@ I tried to make it efficient:
 * Malabarba, for the spinner and smart-mode-line packages.
 * abo-abo, for asking how to check if the current window is selected from
 inside the mode-line, and Drew for answering it.
-* purcell, for reviewing the code. 
+* purcell at melpa, for reviewing the code. 
 * wellons at nullprogram.com, for the code used to save and restore lisp data.
