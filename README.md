@@ -13,6 +13,7 @@ This package provides a little pomodoro timer in the mode-line.
 
 * Use `(require 'redtick)`. After requiring, it shows a little red tick (✓) in the mode-line. When
 you click on it, it starts a pomodoro timer. The pomodoro description is set using current-buffer and which-function.
+![Redtick description](https://raw.githubusercontent.com/ferfebles/redtick/master/redtick-description.png)
 
 * You can launch a pomodoro by M-x redtick, or M-x redtick-with-description (manual description).
 
