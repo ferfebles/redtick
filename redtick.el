@@ -69,6 +69,18 @@
 (defcustom redtick-popup-header '(format "Working with '%s'" (current-buffer))
   "Header used in popup."
   :type 'sexp)
+(defcustom redtick-play-sound nil
+  "Play sounds when true."
+  :type 'boolean)
+(defcustom redtick-sound-volume "0.3"
+  "Sound volume as numeric string (low < 1.0 < high)."
+  :type 'string)
+(defcustom redtick-sox-buffer nil
+  "Name of the buffer used for sox output."
+  :type 'string)
+(defcustom redtick-work-sound (expand-file-name "./resources/tock-tick.wav")
+  "Sound file to play in a loop during the work period."
+  :type 'string)
 
 (require 'which-func)
 
@@ -107,6 +119,27 @@
     (,redtick--restbar-interval "▂" "#99ff66")
     (,redtick--restbar-interval "▁" "#ccff66")
     (nil "✓" "#cf6a4c")))
+
+;; variable that stores the sound process object
+(defvar redtick--sound-process nil)
+
+(defun redtick--play-sound (file &optional args)
+  "Play FILE using sox with optional ARGS."
+  (if redtick-play-sound
+      (setq redtick--sound-process
+            (apply 'start-process "sox" redtick-sox-buffer
+                   "sox" file "-d" "vol" redtick-sound-volume args))))
+
+(defun redtick--stop-sound ()
+  "Stops sound if playing."
+  (if redtick--sound-process
+      (delete-process redtick--sound-process)))
+
+(defun redtick--play-sound-during (file seconds)
+  "Play FILE during SECONDS, repeating or cutting if needed."
+  (let ((fade (if (< seconds 8) "0" "4")))
+       (redtick--play-sound file `("repeat" "-" "fade" "t" ,fade
+                                   ,(number-to-string seconds)))))
 
 (defun redtick--seconds-since (time)
   "Seconds since TIME."
@@ -220,6 +253,8 @@
                                   nil nil (redtick--default-desc))))
   (redtick-mode t)
   (if redtick--timer (cancel-timer redtick--timer))
+  (redtick--stop-sound)
+  (redtick--play-sound-during redtick-work-sound redtick-work-interval)
   (setq redtick--pomodoro-started-at (current-time)
         redtick--pomodoro-description description)
   (redtick--update-current-bar redtick--bars))
