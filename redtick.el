@@ -78,7 +78,9 @@
 (defcustom redtick-sox-buffer nil
   "Name of the buffer used for sox output."
   :type 'string)
-(defcustom redtick-work-sound (expand-file-name "./resources/tock-tick.wav")
+(defcustom redtick-work-sound
+  (expand-file-name "./resources/tock-tick.wav"
+                    (file-name-directory (or load-file-name buffer-file-name)))
   "Sound file to play in a loop during the work period."
   :type 'string)
 
