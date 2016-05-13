@@ -38,3 +38,5 @@ I tried to make it efficient:
 inside the mode-line, and Drew for answering it.
 * purcell at melpa, for reviewing the code. 
 * wellons at nullprogram.com, for the code used to save and restore lisp data.
+* Alexani, for the sound of a pocketwatch ticking found at 'freesound.org'.
+* Jeremy Seitz, for the "fantastic" sounds that he created with a Nord Modular synthesizer, [published in 2007 in his blog](http://www.fozworks.com/blog/2007/07/28/autotest-sound-effects/), and I've been using since then when autotesting in Ruby.
