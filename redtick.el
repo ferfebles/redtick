@@ -47,6 +47,8 @@
 ;;   - It uses an elisp timer to program the next modification of the
 ;;     mode line: no polling, no sleeps...
 ;;   - Only works when the mode-line is changed.
+;;   - Sounds are looped during the interval, not played every second
+;;     (thanks to using SOX player).
 
 ;;; Code:
 
@@ -62,7 +64,6 @@
 (defcustom redtick-rest-interval (* 60 5)
   "Interval of time you will be resting, in seconds."
   :type 'number)
-;; pomodoro history file
 (defcustom redtick-history-file "~/redtick-history.txt"
   "File to store all the completed pomodoros."
   :type 'string)
@@ -76,18 +77,25 @@
   "Sound volume as numeric string (low < 1.0 < high)."
   :type 'string)
 (defcustom redtick-sox-buffer nil
-  "Name of the buffer used for sox output."
+  "Name of the buffer used for sox output (p.e. '*sox-debug*')."
   :type 'string)
 (defcustom redtick-work-sound
-  (expand-file-name "./resources/tock-tick.wav"
+  (expand-file-name "./resources/work.wav"
                     (file-name-directory (or load-file-name buffer-file-name)))
   "Sound file to play in a loop during the work period."
   :type 'string)
+(defcustom redtick-rest-sound
+  (expand-file-name "./resources/rest.wav"
+                    (file-name-directory (or load-file-name buffer-file-name)))
+  "Sound file to play in a loop during the rest period."
+  :type 'string)
+(defcustom redtick-end-rest-sound
+  (expand-file-name "./resources/end-rest.mp3"
+                    (file-name-directory (or load-file-name buffer-file-name)))
+  "Sound file to play in at the end of the rest period."
+  :type 'string)
 
 (require 'which-func)
-
-;; stores the information for completed pomodoros
-(defvar redtick-completed-pomodoros ())
 
 ;; stores redtick timer, to be cancelled if restarted
 (defvar redtick--timer nil)
@@ -121,6 +129,11 @@
     (,redtick--restbar-interval "▂" "#99ff66")
     (,redtick--restbar-interval "▁" "#ccff66")
     (nil "✓" "#cf6a4c")))
+
+(defun redtick--ended-work-interval-p (redtick--current-bars)
+  "Return t when ended work interval based on REDTICK--CURRENT-BARS."
+  (equal `(,redtick--restbar-interval "█")
+       (butlast (car redtick--current-bars))))
 
 ;; variable that stores the sound process object
 (defvar redtick--sound-process nil)
@@ -209,24 +222,28 @@
 
 (defun redtick--save-history ()
   "Adding current-pomodoro info to history file."
-  (redtick--save redtick-history-file
-                 (add-to-list (redtick--load redtick-history-file)
-                              (list redtick--pomodoro-started-at
-                                    redtick-work-interval
-                                    redtick-rest-interval
-                                    redtick--pomodoro-description)
-                              t)))
+  (let ((history (redtick--load redtick-history-file)))
+    (redtick--save redtick-history-file
+                   (add-to-list 'history
+                                (list redtick--pomodoro-started-at
+                                      redtick-work-interval
+                                      redtick-rest-interval
+                                      redtick--pomodoro-description)
+                                t))))
 
 (defun redtick--update-current-bar (redtick--current-bars)
   "Update current bar, and program next update using REDTICK--CURRENT-BARS."
   (setq redtick--current-bar (apply #'redtick--propertize
                                     (cdar redtick--current-bars)))
+  (if (redtick--ended-work-interval-p redtick--current-bars)
+      (redtick--play-sound-during redtick-rest-sound redtick-rest-interval))
   (if (caar redtick--current-bars)
       (setq redtick--timer
             (run-at-time (caar redtick--current-bars)
                          nil
                          #'redtick--update-current-bar
                          (cdr redtick--current-bars)))
+    (redtick--play-sound redtick-end-rest-sound)
     (redtick--save-history))
   (force-mode-line-update t))
 
