@@ -47,8 +47,10 @@
 ;;   - It uses an elisp timer to program the next modification of the
 ;;     mode line: no polling, no sleeps...
 ;;   - Only works when the mode-line is changed.
-;;   - Sounds are looped during the interval, not played every second
-;;     (thanks to using SOX player).
+;;   - It uses SOX player, that supports looping wav files without gaps.
+;;     Thanks to the loop, I only launch a player process when starting
+;;     the work or rest interval.
+;;
 
 ;;; Code:
 
@@ -77,22 +79,22 @@
   "Sound volume as numeric string (low < 1.0 < high)."
   :type 'string)
 (defcustom redtick-sox-buffer nil
-  "Name of the buffer used for sox output (p.e. '*sox-debug*')."
+  "Name of the buffer used for SOX output (p.e. '*sox-debug*')."
   :type 'string)
 (defcustom redtick-work-sound
   (expand-file-name "./resources/work.wav"
                     (file-name-directory (or load-file-name buffer-file-name)))
-  "Sound file to play in a loop during the work period."
+  "Sound file to loop during the work period."
   :type 'string)
 (defcustom redtick-rest-sound
   (expand-file-name "./resources/rest.wav"
                     (file-name-directory (or load-file-name buffer-file-name)))
-  "Sound file to play in a loop during the rest period."
+  "Sound file to loop during the rest period."
   :type 'string)
 (defcustom redtick-end-rest-sound
   (expand-file-name "./resources/end-rest.mp3"
                     (file-name-directory (or load-file-name buffer-file-name)))
-  "Sound file to play in at the end of the rest period."
+  "Sound file to play at the end of the rest period."
   :type 'string)
 
 (require 'which-func)
