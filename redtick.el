@@ -102,6 +102,9 @@
 ;; stores redtick timer, to be cancelled if restarted
 (defvar redtick--timer nil)
 
+;; stores the number of completed pomodoros
+(defvar redtick--completed-pomodoros 0)
+
 ;; pomodoro start time
 (defvar redtick--pomodoro-started-at (current-time))
 
@@ -143,9 +146,11 @@
 (defun redtick--play-sound (file &optional args)
   "Play FILE using sox with optional ARGS."
   (if redtick-play-sound
-      (setq redtick--sound-process
-            (apply 'start-process "sox" redtick-sox-buffer
-                   "sox" file "-d" "vol" redtick-sound-volume args))))
+      (if (executable-find "sox")
+          (setq redtick--sound-process
+                (apply 'start-process "sox" redtick-sox-buffer
+                       "sox" file "-d" "vol" redtick-sound-volume args))
+        (warn "SoX executable not found"))))
 
 (defun redtick--stop-sound ()
   "Stops sound if playing."
@@ -166,7 +171,9 @@
   "TIME since start, DESC(ription) and instructions."
   (let* ((seconds (redtick--seconds-since time))
          (minutes (truncate seconds 60)))
-    (concat (format "%s, %s\n" (format-time-string "%T" time) desc)
+    (concat (format "%s completed pomodoro(s) in this session\n"
+                    redtick--completed-pomodoros)
+            (format "%s, %s\n" (format-time-string "%T" time) desc)
             (cond
              ((= 0 minutes) (format "%s seconds" seconds))
              ((= 1 minutes) "1 minute")
@@ -246,7 +253,9 @@
                          #'redtick--update-current-bar
                          (cdr redtick--current-bars)))
     (redtick--play-sound redtick-end-rest-sound)
-    (redtick--save-history))
+    (redtick--save-history)
+    (setq redtick--completed-pomodoros
+          (1+ redtick--completed-pomodoros)))
   (force-mode-line-update t))
 
 ;;;###autoload
