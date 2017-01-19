@@ -163,6 +163,24 @@
        (redtick--play-sound file `("repeat" "-" "fade" "t" ,fade
                                    ,(number-to-string seconds)))))
 
+(defun redtick--play-work-sound ()
+  (redtick--stop-sound)
+  (redtick--play-sound-during redtick-work-sound redtick-work-interval))
+
+(add-hook 'redtick-before-work-hook #'redtick--play-work-sound)
+
+(defun redtick--play-rest-sound ()
+  (redtick--stop-sound)
+  (redtick--play-sound-during redtick-rest-sound redtick-rest-interval))
+
+(add-hook 'redtick-before-rest-hook #'redtick--play-rest-sound)
+
+(defun redtick--play-end-of-rest-sound ()
+  (redtick--stop-sound)
+  (redtick--play-sound redtick-end-rest-sound))
+
+(add-hook 'redtick-after-rest-hook #'redtick--play-end-of-rest-sound)
+
 (defun redtick--seconds-since (time)
   "Seconds since TIME."
   (truncate (- (float-time (current-time)) (float-time time))))
@@ -240,20 +258,22 @@
                                       redtick--pomodoro-description)
                                 t))))
 
+(add-hook 'redtick-after-rest-hook #'redtick--save-history)
+
 (defun redtick--update-current-bar (redtick--current-bars)
   "Update current bar, and program next update using REDTICK--CURRENT-BARS."
   (setq redtick--current-bar (apply #'redtick--propertize
                                     (cdar redtick--current-bars)))
-  (if (redtick--ended-work-interval-p redtick--current-bars)
-      (redtick--play-sound-during redtick-rest-sound redtick-rest-interval))
+  (when (redtick--ended-work-interval-p redtick--current-bars)
+    (run-hooks 'redtick-after-work-hook
+               'redtick-before-rest-hook))
   (if (caar redtick--current-bars)
       (setq redtick--timer
             (run-at-time (caar redtick--current-bars)
                          nil
                          #'redtick--update-current-bar
                          (cdr redtick--current-bars)))
-    (redtick--play-sound redtick-end-rest-sound)
-    (redtick--save-history)
+    (run-hooks 'redtick-after-rest-hook)
     (setq redtick--completed-pomodoros
           (1+ redtick--completed-pomodoros)))
   (force-mode-line-update t))
@@ -283,8 +303,7 @@
                                   nil nil (redtick--default-desc))))
   (redtick-mode t)
   (if redtick--timer (cancel-timer redtick--timer))
-  (redtick--stop-sound)
-  (redtick--play-sound-during redtick-work-sound redtick-work-interval)
+  (run-hooks 'redtick-before-work-hook)
   (setq redtick--pomodoro-started-at (current-time)
         redtick--pomodoro-description description)
   (redtick--update-current-bar redtick--bars))
