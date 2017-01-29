@@ -43,3 +43,4 @@ inside the mode-line, and Drew for answering it.
 * Alexani, for the sound of a [pocketwatch ticking](https://www.freesound.org/people/Alexsani/sounds/117280/) found at 'freesound.org'.
 * unfa, for the sound of a [clock making a perfect 10-second loop](https://www.freesound.org/people/unfa/sounds/154906/) (cut to make a 2-second loop) found at 'freesound.org'.
 * Jeremy Seitz, for the *fantastic* :notes: sounds that he created with a Nord Modular synthesizer, [published in 2007 in his blog](http://www.fozworks.com/blog/2007/07/28/autotest-sound-effects/), and that I've been using since then when autotesting in Ruby.
+* [Carlo Zancanaro](https://github.com/czan) for cleaning the main loop using hooks.
