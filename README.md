@@ -17,7 +17,7 @@ you click on it, it starts a pomodoro timer. The pomodoro description is set usi
 
 * You can launch a pomodoro by M-x redtick, or M-x redtick-with-description (manual description).
 
-You should install SoX (Sound eXchange http://sox.sourceforge.net) if you want to hear the clock ticking!
+You should install SoX (Sound eXchange http://sox.sourceforge.net) if you want to hear the clock ticking! (be careful, in windows you should clear the "" in the sox path to allow emacs to find the executable)
 
 It only shows the timer in the selected window (a moving timer
 replicated in each window is a little bit distracting!).
