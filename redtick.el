@@ -249,14 +249,15 @@
 
 (defun redtick--save-history ()
   "Adding current-pomodoro info to history file."
-  (let ((history (redtick--load redtick-history-file)))
-    (redtick--save redtick-history-file
-                   (add-to-list 'history
-                                (list redtick--pomodoro-started-at
-                                      redtick-work-interval
-                                      redtick-rest-interval
-                                      redtick--pomodoro-description)
-                                t))))
+  (when redtick-history-file
+    (let ((history (redtick--load redtick-history-file)))
+      (redtick--save redtick-history-file
+                     (add-to-list 'history
+                                  (list redtick--pomodoro-started-at
+                                        redtick-work-interval
+                                        redtick-rest-interval
+                                        redtick--pomodoro-description)
+                                  t)))))
 
 (add-hook 'redtick-after-rest-hook #'redtick--save-history)
 
