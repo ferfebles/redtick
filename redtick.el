@@ -2,7 +2,7 @@
 
 ;; Author: F. Febles
 ;; URL: http://github.com/ferfebles/redtick
-;; Version: 00.01.02
+;; Version: 00.01.03
 ;; Package-Requires: ((emacs "24.4"))
 ;; Keywords: calendar
 
